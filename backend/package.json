@@ -1,0 +1,26 @@
+{
+  "name": "applicazioniwebmobilecloud",
+  "version": "1.0.0",
+  "description": "Progetto Applicazioni Web Mobile Cloud",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2004simonepelosi/ApplicazioniWebMobileCloud.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/2004simonepelosi/ApplicazioniWebMobileCloud/issues"
+  },
+  "homepage": "https://github.com/2004simonepelosi/ApplicazioniWebMobileCloud#readme",
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}
