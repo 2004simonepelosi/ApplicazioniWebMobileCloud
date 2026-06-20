@@ -165,6 +165,35 @@ app.post('/campi', (req, res) => {
     res.status(201).json({ messaggio: 'Campo creato!', id: risultato.lastInsertRowid });
 });
 
+// Creare una prenotazione
+app.post('/prenotazioni', (req, res) => {
+    const { id_utente, id_campo, data, ora_inizio, ora_fine, num_partecipanti, note } = req.body;
+
+    if (!id_utente || !id_campo || !data || !ora_inizio || !ora_fine) {
+        return res.status(400).json({ errore: 'Utente, campo, data e orario sono obbligatori' });
+    }
+
+    // Controlliamo che l'orario non sia già occupato per quel campo
+    // Due fasce orarie si sovrappongono se: inizio_nuova < fine_esistente E fine_nuova > inizio_esistente
+    const conflitto = db.prepare(`
+    SELECT * FROM prenotazioni
+    WHERE id_campo = ? AND data = ? AND stato != 'cancellata'
+    AND ora_inizio < ? AND ora_fine > ?
+  `).get(id_campo, data, ora_fine, ora_inizio);
+
+    if (conflitto) {
+        return res.status(409).json({ errore: 'Orario già prenotato per questo campo' });
+    }
+
+    const stmt = db.prepare(`
+    INSERT INTO prenotazioni (id_utente, id_campo, data, ora_inizio, ora_fine, num_partecipanti, note)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+    const risultato = stmt.run(id_utente, id_campo, data, ora_inizio, ora_fine, num_partecipanti, note);
+
+    res.status(201).json({ messaggio: 'Prenotazione creata!', id: risultato.lastInsertRowid });
+});
+
 app.listen(3000, () => {
     console.log('Server avviato su http://localhost:3000');
 });
