@@ -10,85 +10,136 @@ app.use(express.json());
 
 // Creazione tabelle (in ordine di dipendenza)
 db.exec(`
-    CREATE TABLE IF NOT EXISTS utenti (
-                                          id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                          nome TEXT NOT NULL,
-                                          cognome TEXT NOT NULL,
-                                          email TEXT UNIQUE NOT NULL,
-                                          password TEXT NOT NULL,
-                                          ruolo TEXT NOT NULL DEFAULT 'utente',
-                                          telefono TEXT
-    );
+  CREATE TABLE IF NOT EXISTS utenti (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    cognome TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    ruolo TEXT NOT NULL DEFAULT 'utente',
+    telefono TEXT
+  );
 
-    CREATE TABLE IF NOT EXISTS campi (
-                                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                         id_gestore INTEGER NOT NULL,
-                                         nome TEXT NOT NULL,
-                                         sport TEXT NOT NULL,
-                                         descrizione TEXT,
-                                         indirizzo TEXT,
-                                         prezzo_ora REAL NOT NULL,
-                                         max_giocatori INTEGER,
-                                         foto_url TEXT,
-                                         disponibile INTEGER NOT NULL DEFAULT 1,
-                                         FOREIGN KEY (id_gestore) REFERENCES utenti(id)
-        );
+  CREATE TABLE IF NOT EXISTS campi (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_gestore INTEGER NOT NULL,
+    nome TEXT NOT NULL,
+    sport TEXT NOT NULL,
+    descrizione TEXT,
+    indirizzo TEXT,
+    prezzo_ora REAL NOT NULL,
+    max_giocatori INTEGER,
+    foto_url TEXT,
+    disponibile INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (id_gestore) REFERENCES utenti(id)
+  );
 
-    CREATE TABLE IF NOT EXISTS prenotazioni (
-                                                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                id_utente INTEGER NOT NULL,
-                                                id_campo INTEGER NOT NULL,
-                                                data TEXT NOT NULL,
-                                                ora_inizio TEXT NOT NULL,
-                                                ora_fine TEXT NOT NULL,
-                                                num_partecipanti INTEGER,
-                                                note TEXT,
-                                                stato TEXT NOT NULL DEFAULT 'in attesa',
-                                                FOREIGN KEY (id_utente) REFERENCES utenti(id),
-        FOREIGN KEY (id_campo) REFERENCES campi(id)
-        );
+  CREATE TABLE IF NOT EXISTS prenotazioni (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_utente INTEGER NOT NULL,
+    id_campo INTEGER NOT NULL,
+    data TEXT NOT NULL,
+    ora_inizio TEXT NOT NULL,
+    ora_fine TEXT NOT NULL,
+    num_partecipanti INTEGER,
+    note TEXT,
+    stato TEXT NOT NULL DEFAULT 'in attesa',
+    FOREIGN KEY (id_utente) REFERENCES utenti(id),
+    FOREIGN KEY (id_campo) REFERENCES campi(id)
+  );
 
-    CREATE TABLE IF NOT EXISTS pagamenti (
-                                             id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                             id_prenotazione INTEGER NOT NULL UNIQUE,
-                                             importo REAL NOT NULL,
-                                             stato TEXT NOT NULL DEFAULT 'in attesa',
-                                             metodo TEXT,
-                                             data_pagamento TEXT,
-                                             FOREIGN KEY (id_prenotazione) REFERENCES prenotazioni(id)
-        );
+  CREATE TABLE IF NOT EXISTS pagamenti (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_prenotazione INTEGER NOT NULL UNIQUE,
+    importo REAL NOT NULL,
+    stato TEXT NOT NULL DEFAULT 'in attesa',
+    metodo TEXT,
+    data_pagamento TEXT,
+    FOREIGN KEY (id_prenotazione) REFERENCES prenotazioni(id)
+  );
 
-    CREATE TABLE IF NOT EXISTS recensioni (
-                                              id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                              id_utente INTEGER NOT NULL,
-                                              id_campo INTEGER NOT NULL,
-                                              stelle INTEGER NOT NULL,
-                                              commento TEXT,
-                                              data TEXT NOT NULL,
-                                              FOREIGN KEY (id_utente) REFERENCES utenti(id),
-        FOREIGN KEY (id_campo) REFERENCES campi(id)
-        );
+  CREATE TABLE IF NOT EXISTS recensioni (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_utente INTEGER NOT NULL,
+    id_campo INTEGER NOT NULL,
+    stelle INTEGER NOT NULL,
+    commento TEXT,
+    data TEXT NOT NULL,
+    FOREIGN KEY (id_utente) REFERENCES utenti(id),
+    FOREIGN KEY (id_campo) REFERENCES campi(id)
+  );
 
-    CREATE TABLE IF NOT EXISTS notifiche (
-                                             id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                             id_utente INTEGER NOT NULL,
-                                             messaggio TEXT NOT NULL,
-                                             letta INTEGER NOT NULL DEFAULT 0,
-                                             data TEXT NOT NULL,
-                                             FOREIGN KEY (id_utente) REFERENCES utenti(id)
-        );
+  CREATE TABLE IF NOT EXISTS notifiche (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_utente INTEGER NOT NULL,
+    messaggio TEXT NOT NULL,
+    letta INTEGER NOT NULL DEFAULT 0,
+    data TEXT NOT NULL,
+    FOREIGN KEY (id_utente) REFERENCES utenti(id)
+  );
 
-    CREATE TABLE IF NOT EXISTS servizi_campo (
-                                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                 id_campo INTEGER NOT NULL,
-                                                 servizio TEXT NOT NULL,
-                                                 FOREIGN KEY (id_campo) REFERENCES campi(id)
-        );
+  CREATE TABLE IF NOT EXISTS servizi_campo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_campo INTEGER NOT NULL,
+    servizio TEXT NOT NULL,
+    FOREIGN KEY (id_campo) REFERENCES campi(id)
+  );
 `);
 
 // Route di test
 app.get('/', (req, res) => {
     res.json({ messaggio: 'Backend funzionante!' });
+});
+
+// Registrazione utente
+app.post('/utenti/registra', (req, res) => {
+    const { nome, cognome, email, password, telefono } = req.body;
+
+    if (!nome || !cognome || !email || !password) {
+        return res.status(400).json({ errore: 'Tutti i campi obbligatori devono essere compilati' });
+    }
+
+    try {
+        const stmt = db.prepare(`
+      INSERT INTO utenti (nome, cognome, email, password, telefono)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+        const risultato = stmt.run(nome, cognome, email, password, telefono);
+
+        res.status(201).json({ messaggio: 'Utente registrato!', id: risultato.lastInsertRowid });
+    } catch (errore) {
+        res.status(400).json({ errore: 'Email già registrata' });
+    }
+});
+
+// Login utente
+app.post('/utenti/login', (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ errore: 'Email e password sono obbligatorie' });
+    }
+
+    const utente = db.prepare('SELECT * FROM utenti WHERE email = ?').get(email);
+
+    if (!utente) {
+        return res.status(401).json({ errore: 'Email o password errati' });
+    }
+
+    if (utente.password !== password) {
+        return res.status(401).json({ errore: 'Email o password errati' });
+    }
+
+    res.json({
+        messaggio: 'Login riuscito!',
+        utente: {
+            id: utente.id,
+            nome: utente.nome,
+            cognome: utente.cognome,
+            email: utente.email,
+            ruolo: utente.ruolo
+        }
+    });
 });
 
 app.listen(3000, () => {
