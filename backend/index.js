@@ -194,6 +194,21 @@ app.post('/prenotazioni', (req, res) => {
     res.status(201).json({ messaggio: 'Prenotazione creata!', id: risultato.lastInsertRowid });
 });
 
+// Vedere le prenotazioni di un utente specifico
+app.get('/prenotazioni/utente/:id', (req, res) => {
+    const idUtente = req.params.id;
+
+    const prenotazioni = db.prepare(`
+    SELECT prenotazioni.*, campi.nome AS nome_campo, campi.sport
+    FROM prenotazioni
+    JOIN campi ON prenotazioni.id_campo = campi.id
+    WHERE prenotazioni.id_utente = ?
+    ORDER BY prenotazioni.data DESC
+  `).all(idUtente);
+
+    res.json(prenotazioni);
+});
+
 app.listen(3000, () => {
     console.log('Server avviato su http://localhost:3000');
 });
