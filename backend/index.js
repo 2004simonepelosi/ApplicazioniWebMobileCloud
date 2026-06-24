@@ -209,6 +209,72 @@ app.get('/prenotazioni/utente/:id', (req, res) => {
     res.json(prenotazioni);
 });
 
+// Vedere il dettaglio di un singolo campo
+app.get('/campi/:id', (req, res) => {
+    const idCampo = req.params.id;
+
+    const campo = db.prepare('SELECT * FROM campi WHERE id = ?').get(idCampo);
+
+    if (!campo) {
+        return res.status(404).json({ errore: 'Campo non trovato' });
+    }
+
+    res.json(campo);
+});
+
+// Cancellare una prenotazione
+app.put('/prenotazioni/:id/cancella', (req, res) => {
+    const idPrenotazione = req.params.id;
+
+    const prenotazione = db.prepare('SELECT * FROM prenotazioni WHERE id = ?').get(idPrenotazione);
+
+    if (!prenotazione) {
+        return res.status(404).json({ errore: 'Prenotazione non trovata' });
+    }
+
+    db.prepare('UPDATE prenotazioni SET stato = ? WHERE id = ?').run('cancellata', idPrenotazione);
+
+    res.json({ messaggio: 'Prenotazione cancellata' });
+});
+
+// Creare una recensione
+app.post('/recensioni', (req, res) => {
+    const { id_utente, id_campo, stelle, commento } = req.body;
+
+    if (!id_utente || !id_campo || !stelle) {
+        return res.status(400).json({ errore: 'Utente, campo e stelle sono obbligatori' });
+    }
+
+    if (stelle < 1 || stelle > 5) {
+        return res.status(400).json({ errore: 'Le stelle devono essere tra 1 e 5' });
+    }
+
+    const data = new Date().toISOString().split('T')[0];
+
+    const stmt = db.prepare(`
+    INSERT INTO recensioni (id_utente, id_campo, stelle, commento, data)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+    const risultato = stmt.run(id_utente, id_campo, stelle, commento, data);
+
+    res.status(201).json({ messaggio: 'Recensione creata!', id: risultato.lastInsertRowid });
+});
+
+// Vedere le recensioni di un campo
+app.get('/recensioni/campo/:id', (req, res) => {
+    const idCampo = req.params.id;
+
+    const recensioni = db.prepare(`
+    SELECT recensioni.*, utenti.nome, utenti.cognome
+    FROM recensioni
+    JOIN utenti ON recensioni.id_utente = utenti.id
+    WHERE recensioni.id_campo = ?
+    ORDER BY recensioni.data DESC
+  `).all(idCampo);
+
+    res.json(recensioni);
+});
+
 app.listen(3000, () => {
     console.log('Server avviato su http://localhost:3000');
 });
