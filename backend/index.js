@@ -275,6 +275,12 @@ app.get('/recensioni/campo/:id', (req, res) => {
     res.json(recensioni);
 });
 
+// Vedere tutti gli utenti (utile per debug e pannello admin)
+app.get('/utenti', (req, res) => {
+    const utenti = db.prepare('SELECT id, nome, cognome, email, ruolo FROM utenti').all();
+    res.json(utenti);
+});
+
 app.listen(3000, () => {
     console.log('Server avviato su http://localhost:3000');
 });

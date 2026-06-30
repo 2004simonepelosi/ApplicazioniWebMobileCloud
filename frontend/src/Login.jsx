@@ -1,12 +1,16 @@
 import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errore, setErrore] = useState('');
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setErrore('');
 
         const risposta = await fetch('http://localhost:3000/utenti/login', {
             method: 'POST',
@@ -21,7 +25,10 @@ function Login() {
             return;
         }
 
-        console.log('Login riuscito:', dati.utente);
+        localStorage.setItem('utente', JSON.stringify(dati.utente));
+
+        const destinazione = location.state?.tornaA || '/';
+        navigate(destinazione);
     };
 
     return (
@@ -54,6 +61,10 @@ function Login() {
             </form>
 
             {errore && <p style={styles.errore}>{errore}</p>}
+
+            <p style={styles.testoLink}>
+                Non hai un account? <Link to="/registrazione" style={styles.link}>Registrati</Link>
+            </p>
         </div>
     );
 }
@@ -125,6 +136,17 @@ const styles = {
         color: '#F09595',
         fontSize: '13px',
         marginTop: '12px'
+    },
+    testoLink: {
+        fontSize: '13px',
+        color: '#888780',
+        textAlign: 'center',
+        marginTop: '20px'
+    },
+    link: {
+        color: '#FAC775',
+        fontWeight: 500,
+        textDecoration: 'none'
     }
 };
 

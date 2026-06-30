@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 function Registrazione() {
     const [nome, setNome] = useState('');
@@ -87,6 +88,10 @@ function Registrazione() {
 
             {errore && <p style={styles.errore}>{errore}</p>}
             {successo && <p style={styles.successo}>Registrazione completata! Ora puoi accedere.</p>}
+
+            <p style={styles.testoLink}>
+                Hai già un account? <Link to="/" style={styles.link}>Accedi</Link>
+            </p>
         </div>
     );
 }
@@ -170,6 +175,17 @@ const styles = {
         color: '#97C459',
         fontSize: '13px',
         marginTop: '12px'
+    },
+    testoLink: {
+        fontSize: '13px',
+        color: '#888780',
+        textAlign: 'center',
+        marginTop: '20px'
+    },
+    link: {
+        color: '#FAC775',
+        fontWeight: 500,
+        textDecoration: 'none'
     }
 };
 

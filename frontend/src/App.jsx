@@ -1,4 +1,8 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Login from './Login';
 import Registrazione from './Registrazione';
+import Home from './Home';
+import DettaglioCampo from './DettaglioCampo';
 import './App.css';
 
 function App() {
@@ -12,7 +16,14 @@ function App() {
             padding: '20px',
             boxSizing: 'border-box'
         }}>
-            <Registrazione />
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/registrazione" element={<Registrazione />} />
+                    <Route path="/campo/:id" element={<DettaglioCampo />} />
+                </Routes>
+            </BrowserRouter>
         </div>
     );
 }
