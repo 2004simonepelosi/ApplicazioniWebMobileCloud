@@ -3,6 +3,7 @@ import Login from './Login';
 import Registrazione from './Registrazione';
 import Home from './Home';
 import DettaglioCampo from './DettaglioCampo';
+import MiePrenotazioni from './MiePrenotazioni';
 import './App.css';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/registrazione" element={<Registrazione />} />
                     <Route path="/campo/:id" element={<DettaglioCampo />} />
+                    <Route path="/prenotazioni" element={<MiePrenotazioni />} />
                 </Routes>
             </BrowserRouter>
         </div>

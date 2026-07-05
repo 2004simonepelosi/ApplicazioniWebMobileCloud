@@ -34,7 +34,6 @@ function Home() {
         <div style={styles.schermo}>
             <div style={styles.header}>
                 <p style={styles.titolo}>Dove giochi oggi?</p>
-
                 {utente ? (
                     <div style={styles.utenteBox}>
                         <span style={styles.nomeUtente}>{utente.nome}</span>
@@ -44,6 +43,12 @@ function Home() {
                     <button onClick={() => navigate('/login')} style={styles.bottoneAccedi}>Accedi</button>
                 )}
             </div>
+
+            {utente && (
+                <button onClick={() => navigate('/prenotazioni')} style={styles.bottonePrenotazioni}>
+                    📅 Le mie prenotazioni
+                </button>
+            )}
 
             <div style={styles.lista}>
                 {campi.map((campo) => (
@@ -75,7 +80,7 @@ const styles = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '20px'
+        marginBottom: '16px'
     },
     titolo: {
         color: '#FAEEDA',
@@ -111,6 +116,18 @@ const styles = {
         fontWeight: 500,
         fontSize: '13px',
         cursor: 'pointer'
+    },
+    bottonePrenotazioni: {
+        width: '100%',
+        background: '#1C1F26',
+        border: 'none',
+        borderRadius: '14px',
+        padding: '14px 16px',
+        color: '#FAEEDA',
+        fontSize: '14px',
+        cursor: 'pointer',
+        textAlign: 'left',
+        marginBottom: '16px'
     },
     lista: {
         display: 'flex',
