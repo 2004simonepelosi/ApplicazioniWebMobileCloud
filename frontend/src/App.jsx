@@ -6,6 +6,8 @@ import DettaglioCampo from './DettaglioCampo';
 import MiePrenotazioni from './MiePrenotazioni';
 import Profilo from './Profilo';
 import DashboardGestore from './DashboardGestore';
+import DashboardAdmin from './DashboardAdmin';
+import CambioPassword from './CambioPassword';
 import './App.css';
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
                     <Route path="/prenotazioni" element={<MiePrenotazioni />} />
                     <Route path="/profilo" element={<Profilo />} />
                     <Route path="/gestore" element={<DashboardGestore />} />
+                    <Route path="/admin" element={<DashboardAdmin />} />
+                    <Route path="/cambio-password" element={<CambioPassword />} />
                 </Routes>
             </BrowserRouter>
         </div>

@@ -34,7 +34,12 @@ function Home() {
                 <p style={styles.titolo}>Dove giochi oggi?</p>
                 {utente ? (
                     <div style={styles.utenteBox}>
-                        <span style={{ ...styles.nomeUtente, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate('/profilo')}>{utente.nome}</span>
+            <span
+                style={{ ...styles.nomeUtente, cursor: 'pointer', textDecoration: 'underline' }}
+                onClick={() => navigate('/profilo')}
+            >
+              {utente.nome}
+            </span>
                         <button onClick={handleLogout} style={styles.bottoneLogout}>Esci</button>
                     </div>
                 ) : (
@@ -42,9 +47,22 @@ function Home() {
                 )}
             </div>
 
-            {utente && <button onClick={() => navigate('/prenotazioni')} style={styles.bottonePrenotazioni}>📅 Le mie prenotazioni</button>}
+            {utente && (
+                <button onClick={() => navigate('/prenotazioni')} style={styles.bottonePrenotazioni}>
+                    📅 Le mie prenotazioni
+                </button>
+            )}
+
             {utente && (utente.ruolo === 'gestore' || utente.ruolo === 'admin') && (
-                <button onClick={() => navigate('/gestore')} style={styles.bottoneGestore}>⚙️ Dashboard Gestore</button>
+                <button onClick={() => navigate('/gestore')} style={styles.bottoneGestore}>
+                    ⚙️ Dashboard Gestore
+                </button>
+            )}
+
+            {utente && utente.ruolo === 'admin' && (
+                <button onClick={() => navigate('/admin')} style={styles.bottoneAdmin}>
+                    👑 Dashboard Admin
+                </button>
             )}
 
             <div style={styles.lista}>
@@ -63,21 +81,123 @@ function Home() {
 }
 
 const styles = {
-    schermo: { background: '#0F1115', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '420px', margin: '0 auto', minHeight: '600px', boxSizing: 'border-box' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
-    titolo: { color: '#FAEEDA', fontSize: '24px', fontWeight: 500, margin: 0 },
-    utenteBox: { display: 'flex', alignItems: 'center', gap: '10px' },
-    nomeUtente: { color: '#FAEEDA', fontSize: '14px' },
-    bottoneAccedi: { background: '#FAC775', border: 'none', borderRadius: '10px', padding: '8px 16px', color: '#412402', fontWeight: 500, fontSize: '13px', cursor: 'pointer' },
-    bottoneLogout: { background: '#1C1F26', border: 'none', borderRadius: '10px', padding: '8px 16px', color: '#F09595', fontWeight: 500, fontSize: '13px', cursor: 'pointer' },
-    bottonePrenotazioni: { width: '100%', background: '#1C1F26', border: 'none', borderRadius: '14px', padding: '14px 16px', color: '#FAEEDA', fontSize: '14px', cursor: 'pointer', textAlign: 'left', marginBottom: '10px' },
-    bottoneGestore: { width: '100%', background: '#1C1F26', border: 'none', borderRadius: '14px', padding: '14px 16px', color: '#FAC775', fontSize: '14px', cursor: 'pointer', textAlign: 'left', marginBottom: '16px' },
-    lista: { display: 'flex', flexDirection: 'column', gap: '12px' },
-    cardLink: { textDecoration: 'none' },
-    card: { background: '#1C1F26', borderRadius: '16px', padding: '16px' },
-    nomeCampo: { color: '#FAEEDA', fontSize: '16px', fontWeight: 500, margin: '0 0 4px' },
-    dettagli: { color: '#888780', fontSize: '13px', margin: '0 0 8px' },
-    prezzo: { color: '#FAC775', fontSize: '16px', fontWeight: 500, margin: 0 }
+    schermo: {
+        background: '#0F1115',
+        borderRadius: '20px',
+        padding: '24px',
+        width: '100%',
+        maxWidth: '420px',
+        margin: '0 auto',
+        minHeight: '600px',
+        boxSizing: 'border-box'
+    },
+    header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '16px'
+    },
+    titolo: {
+        color: '#FAEEDA',
+        fontSize: '24px',
+        fontWeight: 500,
+        margin: 0
+    },
+    utenteBox: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
+    },
+    nomeUtente: {
+        color: '#FAEEDA',
+        fontSize: '14px'
+    },
+    bottoneAccedi: {
+        background: '#FAC775',
+        border: 'none',
+        borderRadius: '10px',
+        padding: '8px 16px',
+        color: '#412402',
+        fontWeight: 500,
+        fontSize: '13px',
+        cursor: 'pointer'
+    },
+    bottoneLogout: {
+        background: '#1C1F26',
+        border: 'none',
+        borderRadius: '10px',
+        padding: '8px 16px',
+        color: '#F09595',
+        fontWeight: 500,
+        fontSize: '13px',
+        cursor: 'pointer'
+    },
+    bottonePrenotazioni: {
+        width: '100%',
+        background: '#1C1F26',
+        border: 'none',
+        borderRadius: '14px',
+        padding: '14px 16px',
+        color: '#FAEEDA',
+        fontSize: '14px',
+        cursor: 'pointer',
+        textAlign: 'left',
+        marginBottom: '10px'
+    },
+    bottoneGestore: {
+        width: '100%',
+        background: '#1C1F26',
+        border: 'none',
+        borderRadius: '14px',
+        padding: '14px 16px',
+        color: '#FAC775',
+        fontSize: '14px',
+        cursor: 'pointer',
+        textAlign: 'left',
+        marginBottom: '10px'
+    },
+    bottoneAdmin: {
+        width: '100%',
+        background: '#1C1F26',
+        border: 'none',
+        borderRadius: '14px',
+        padding: '14px 16px',
+        color: '#F09595',
+        fontSize: '14px',
+        cursor: 'pointer',
+        textAlign: 'left',
+        marginBottom: '16px'
+    },
+    lista: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
+    },
+    cardLink: {
+        textDecoration: 'none'
+    },
+    card: {
+        background: '#1C1F26',
+        borderRadius: '16px',
+        padding: '16px'
+    },
+    nomeCampo: {
+        color: '#FAEEDA',
+        fontSize: '16px',
+        fontWeight: 500,
+        margin: '0 0 4px'
+    },
+    dettagli: {
+        color: '#888780',
+        fontSize: '13px',
+        margin: '0 0 8px'
+    },
+    prezzo: {
+        color: '#FAC775',
+        fontSize: '16px',
+        fontWeight: 500,
+        margin: 0
+    }
 };
 
 export default Home;
