@@ -4,6 +4,7 @@ import Registrazione from './Registrazione';
 import Home from './Home';
 import DettaglioCampo from './DettaglioCampo';
 import MiePrenotazioni from './MiePrenotazioni';
+import Profilo from './Profilo';
 import './App.css';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
                     <Route path="/registrazione" element={<Registrazione />} />
                     <Route path="/campo/:id" element={<DettaglioCampo />} />
                     <Route path="/prenotazioni" element={<MiePrenotazioni />} />
+                    <Route path="/profilo" element={<Profilo />} />
                 </Routes>
             </BrowserRouter>
         </div>

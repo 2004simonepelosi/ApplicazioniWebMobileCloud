@@ -36,7 +36,12 @@ function Home() {
                 <p style={styles.titolo}>Dove giochi oggi?</p>
                 {utente ? (
                     <div style={styles.utenteBox}>
-                        <span style={styles.nomeUtente}>{utente.nome}</span>
+            <span
+                style={{ ...styles.nomeUtente, cursor: 'pointer', textDecoration: 'underline' }}
+                onClick={() => navigate('/profilo')}
+            >
+              {utente.nome}
+            </span>
                         <button onClick={handleLogout} style={styles.bottoneLogout}>Esci</button>
                     </div>
                 ) : (
