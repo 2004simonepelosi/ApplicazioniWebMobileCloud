@@ -55,6 +55,12 @@ function Home() {
                 </button>
             )}
 
+            {utente && (utente.ruolo === 'gestore' || utente.ruolo === 'admin') && (
+                <button onClick={() => navigate('/gestore')} style={styles.bottoneGestore}>
+                    ⚙️ Dashboard Gestore
+                </button>
+            )}
+
             <div style={styles.lista}>
                 {campi.map((campo) => (
                     <Link key={campo.id} to={`/campo/${campo.id}`} style={styles.cardLink}>
@@ -129,6 +135,18 @@ const styles = {
         borderRadius: '14px',
         padding: '14px 16px',
         color: '#FAEEDA',
+        fontSize: '14px',
+        cursor: 'pointer',
+        textAlign: 'left',
+        marginBottom: '10px'
+    },
+    bottoneGestore: {
+        width: '100%',
+        background: '#1C1F26',
+        border: 'none',
+        borderRadius: '14px',
+        padding: '14px 16px',
+        color: '#FAC775',
         fontSize: '14px',
         cursor: 'pointer',
         textAlign: 'left',

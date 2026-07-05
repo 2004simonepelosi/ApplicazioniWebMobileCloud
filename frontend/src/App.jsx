@@ -5,6 +5,7 @@ import Home from './Home';
 import DettaglioCampo from './DettaglioCampo';
 import MiePrenotazioni from './MiePrenotazioni';
 import Profilo from './Profilo';
+import DashboardGestore from './DashboardGestore';
 import './App.css';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
                     <Route path="/campo/:id" element={<DettaglioCampo />} />
                     <Route path="/prenotazioni" element={<MiePrenotazioni />} />
                     <Route path="/profilo" element={<Profilo />} />
+                    <Route path="/gestore" element={<DashboardGestore />} />
                 </Routes>
             </BrowserRouter>
         </div>

@@ -1,6 +1,9 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const db = new Database('database.db');
@@ -92,7 +95,7 @@ app.get('/', (req, res) => {
 });
 
 // Registrazione utente
-app.post('/utenti/registra', (req, res) => {
+app.post('/utenti/registra', async (req, res) => {
     const { nome, cognome, email, password, telefono } = req.body;
 
     if (!nome || !cognome || !email || !password) {
@@ -100,12 +103,13 @@ app.post('/utenti/registra', (req, res) => {
     }
 
     try {
+        const passwordCifrata = await bcrypt.hash(password, 10);
+
         const stmt = db.prepare(`
       INSERT INTO utenti (nome, cognome, email, password, telefono)
       VALUES (?, ?, ?, ?, ?)
     `);
-        const risultato = stmt.run(nome, cognome, email, password, telefono);
-
+        const risultato = stmt.run(nome, cognome, email, passwordCifrata, telefono);
         res.status(201).json({ messaggio: 'Utente registrato!', id: risultato.lastInsertRowid });
     } catch (errore) {
         res.status(400).json({ errore: 'Email già registrata' });
@@ -113,7 +117,7 @@ app.post('/utenti/registra', (req, res) => {
 });
 
 // Login utente
-app.post('/utenti/login', (req, res) => {
+app.post('/utenti/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -126,7 +130,9 @@ app.post('/utenti/login', (req, res) => {
         return res.status(401).json({ errore: 'Email o password errati' });
     }
 
-    if (utente.password !== password) {
+    const passwordCorretta = await bcrypt.compare(password, utente.password);
+
+    if (!passwordCorretta) {
         return res.status(401).json({ errore: 'Email o password errati' });
     }
 
@@ -142,10 +148,46 @@ app.post('/utenti/login', (req, res) => {
     });
 });
 
+// Vedere tutti gli utenti
+app.get('/utenti', (req, res) => {
+    const utenti = db.prepare('SELECT id, nome, cognome, email, ruolo FROM utenti').all();
+    res.json(utenti);
+});
+
+// Cambiare il ruolo di un utente
+app.put('/utenti/:id/ruolo', (req, res) => {
+    const idUtente = req.params.id;
+    const { ruolo } = req.body;
+
+    if (!['utente', 'gestore', 'admin'].includes(ruolo)) {
+        return res.status(400).json({ errore: 'Ruolo non valido' });
+    }
+
+    const utente = db.prepare('SELECT * FROM utenti WHERE id = ?').get(idUtente);
+    if (!utente) {
+        return res.status(404).json({ errore: 'Utente non trovato' });
+    }
+
+    db.prepare('UPDATE utenti SET ruolo = ? WHERE id = ?').run(ruolo, idUtente);
+    res.json({ messaggio: `Ruolo aggiornato a ${ruolo}` });
+});
+
 // Vedere tutti i campi disponibili
 app.get('/campi', (req, res) => {
     const campi = db.prepare('SELECT * FROM campi WHERE disponibile = 1').all();
     res.json(campi);
+});
+
+// Vedere il dettaglio di un singolo campo
+app.get('/campi/:id', (req, res) => {
+    const idCampo = req.params.id;
+    const campo = db.prepare('SELECT * FROM campi WHERE id = ?').get(idCampo);
+
+    if (!campo) {
+        return res.status(404).json({ errore: 'Campo non trovato' });
+    }
+
+    res.json(campo);
 });
 
 // Creare un nuovo campo (lato gestore)
@@ -161,8 +203,14 @@ app.post('/campi', (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
     const risultato = stmt.run(id_gestore, nome, sport, descrizione, indirizzo, prezzo_ora, max_giocatori, foto_url);
-
     res.status(201).json({ messaggio: 'Campo creato!', id: risultato.lastInsertRowid });
+});
+
+// Vedere i campi di un gestore
+app.get('/campi/gestore/:id', (req, res) => {
+    const idGestore = req.params.id;
+    const campi = db.prepare('SELECT * FROM campi WHERE id_gestore = ?').all(idGestore);
+    res.json(campi);
 });
 
 // Creare una prenotazione
@@ -173,8 +221,6 @@ app.post('/prenotazioni', (req, res) => {
         return res.status(400).json({ errore: 'Utente, campo, data e orario sono obbligatori' });
     }
 
-    // Controlliamo che l'orario non sia già occupato per quel campo
-    // Due fasce orarie si sovrappongono se: inizio_nuova < fine_esistente E fine_nuova > inizio_esistente
     const conflitto = db.prepare(`
     SELECT * FROM prenotazioni
     WHERE id_campo = ? AND data = ? AND stato != 'cancellata'
@@ -190,11 +236,10 @@ app.post('/prenotazioni', (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
     const risultato = stmt.run(id_utente, id_campo, data, ora_inizio, ora_fine, num_partecipanti, note);
-
     res.status(201).json({ messaggio: 'Prenotazione creata!', id: risultato.lastInsertRowid });
 });
 
-// Vedere le prenotazioni di un utente specifico
+// Vedere le prenotazioni di un utente
 app.get('/prenotazioni/utente/:id', (req, res) => {
     const idUtente = req.params.id;
 
@@ -209,17 +254,19 @@ app.get('/prenotazioni/utente/:id', (req, res) => {
     res.json(prenotazioni);
 });
 
-// Vedere il dettaglio di un singolo campo
-app.get('/campi/:id', (req, res) => {
+// Vedere le prenotazioni di un campo (per il gestore)
+app.get('/prenotazioni/campo/:id', (req, res) => {
     const idCampo = req.params.id;
 
-    const campo = db.prepare('SELECT * FROM campi WHERE id = ?').get(idCampo);
+    const prenotazioni = db.prepare(`
+    SELECT prenotazioni.*, utenti.nome, utenti.cognome
+    FROM prenotazioni
+    JOIN utenti ON prenotazioni.id_utente = utenti.id
+    WHERE prenotazioni.id_campo = ?
+    ORDER BY prenotazioni.data DESC
+  `).all(idCampo);
 
-    if (!campo) {
-        return res.status(404).json({ errore: 'Campo non trovato' });
-    }
-
-    res.json(campo);
+    res.json(prenotazioni);
 });
 
 // Cancellare una prenotazione
@@ -227,14 +274,25 @@ app.put('/prenotazioni/:id/cancella', (req, res) => {
     const idPrenotazione = req.params.id;
 
     const prenotazione = db.prepare('SELECT * FROM prenotazioni WHERE id = ?').get(idPrenotazione);
-
     if (!prenotazione) {
         return res.status(404).json({ errore: 'Prenotazione non trovata' });
     }
 
     db.prepare('UPDATE prenotazioni SET stato = ? WHERE id = ?').run('cancellata', idPrenotazione);
-
     res.json({ messaggio: 'Prenotazione cancellata' });
+});
+
+// Confermare una prenotazione (gestore)
+app.put('/prenotazioni/:id/conferma', (req, res) => {
+    const idPrenotazione = req.params.id;
+
+    const prenotazione = db.prepare('SELECT * FROM prenotazioni WHERE id = ?').get(idPrenotazione);
+    if (!prenotazione) {
+        return res.status(404).json({ errore: 'Prenotazione non trovata' });
+    }
+
+    db.prepare('UPDATE prenotazioni SET stato = ? WHERE id = ?').run('confermata', idPrenotazione);
+    res.json({ messaggio: 'Prenotazione confermata' });
 });
 
 // Creare una recensione
@@ -256,7 +314,6 @@ app.post('/recensioni', (req, res) => {
     VALUES (?, ?, ?, ?, ?)
   `);
     const risultato = stmt.run(id_utente, id_campo, stelle, commento, data);
-
     res.status(201).json({ messaggio: 'Recensione creata!', id: risultato.lastInsertRowid });
 });
 
@@ -275,12 +332,7 @@ app.get('/recensioni/campo/:id', (req, res) => {
     res.json(recensioni);
 });
 
-// Vedere tutti gli utenti (utile per debug e pannello admin)
-app.get('/utenti', (req, res) => {
-    const utenti = db.prepare('SELECT id, nome, cognome, email, ruolo FROM utenti').all();
-    res.json(utenti);
-});
-
-app.listen(3000, () => {
-    console.log('Server avviato su http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server avviato su http://localhost:${PORT}`);
 });
