@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API = import.meta.env.VITE_API_URL;
+
 function DashboardGestore() {
     const [campi, setCampi] = useState([]);
     const [prenotazioni, setPrenotazioni] = useState([]);
@@ -20,12 +22,12 @@ function DashboardGestore() {
 
         setUtente(u);
 
-        fetch(`http://localhost:3000/campi/gestore/${u.id}`)
+        fetch(`${API}/campi/gestore/${u.id}`)
             .then(r => r.json())
             .then(dati => {
                 setCampi(dati);
                 const promises = dati.map(campo =>
-                    fetch(`http://localhost:3000/prenotazioni/campo/${campo.id}`)
+                    fetch(`${API}/prenotazioni/campo/${campo.id}`)
                         .then(r => r.json())
                 );
                 return Promise.all(promises);
@@ -38,7 +40,7 @@ function DashboardGestore() {
 
     const handleAggiungiCampo = async (e) => {
         e.preventDefault();
-        const risposta = await fetch('http://localhost:3000/campi', {
+        const risposta = await fetch(`${API}/campi`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...form, id_gestore: utente.id, prezzo_ora: parseFloat(form.prezzo_ora), max_giocatori: parseInt(form.max_giocatori) })
@@ -48,16 +50,16 @@ function DashboardGestore() {
         setMessaggio('Campo aggiunto!');
         setNuovoCampo(false);
         setForm({ nome: '', sport: '', indirizzo: '', prezzo_ora: '', max_giocatori: '', descrizione: '' });
-        fetch(`http://localhost:3000/campi/gestore/${utente.id}`).then(r => r.json()).then(setCampi);
+        fetch(`${API}/campi/gestore/${utente.id}`).then(r => r.json()).then(setCampi);
     };
 
     const handleConferma = async (idPrenotazione) => {
-        await fetch(`http://localhost:3000/prenotazioni/${idPrenotazione}/conferma`, { method: 'PUT' });
+        await fetch(`${API}/prenotazioni/${idPrenotazione}/conferma`, { method: 'PUT' });
         setPrenotazioni(prev => prev.map(p => p.id === idPrenotazione ? { ...p, stato: 'confermata' } : p));
     };
 
     const handleRifiuta = async (idPrenotazione) => {
-        await fetch(`http://localhost:3000/prenotazioni/${idPrenotazione}/cancella`, { method: 'PUT' });
+        await fetch(`${API}/prenotazioni/${idPrenotazione}/cancella`, { method: 'PUT' });
         setPrenotazioni(prev => prev.map(p => p.id === idPrenotazione ? { ...p, stato: 'cancellata' } : p));
     };
 
