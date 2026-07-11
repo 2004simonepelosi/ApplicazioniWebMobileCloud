@@ -13,6 +13,8 @@ function DettaglioCampo() {
     const [oraFine, setOraFine] = useState('');
     const [messaggio, setMessaggio] = useState('');
 
+    const oggi = new Date().toISOString().split('T')[0];
+
     useEffect(() => {
         fetch(`${API}/campi/${id}`)
             .then(risposta => risposta.json())
@@ -31,6 +33,11 @@ function DettaglioCampo() {
 
         if (!data || !oraInizio || !oraFine) {
             setMessaggio('Compila data e orario');
+            return;
+        }
+
+        if (oraFine <= oraInizio) {
+            setMessaggio("L'ora di fine deve essere dopo l'ora di inizio");
             return;
         }
 
@@ -57,8 +64,16 @@ function DettaglioCampo() {
                 <p style={styles.sport}>{campo.sport} · max {campo.max_giocatori} giocatori</p>
             </div>
             {campo.descrizione && <p style={styles.descrizione}>{campo.descrizione}</p>}
+
             <label style={styles.label}>DATA</label>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} style={styles.input} />
+            <input
+                type="date"
+                value={data}
+                min={oggi}
+                onChange={(e) => setData(e.target.value)}
+                style={styles.input}
+            />
+
             <div style={styles.rigaDoppia}>
                 <div style={styles.colonna}>
                     <label style={styles.label}>DALLE</label>
@@ -69,6 +84,7 @@ function DettaglioCampo() {
                     <input type="time" value={oraFine} onChange={(e) => setOraFine(e.target.value)} style={styles.input} />
                 </div>
             </div>
+
             <div style={styles.prezzoBox}>
                 <div>
                     <p style={styles.etichettaPrezzo}>Prezzo</p>
@@ -76,7 +92,10 @@ function DettaglioCampo() {
                 </div>
                 <button onClick={handlePrenota} style={styles.bottonePrenota}>Prenota</button>
             </div>
-            {messaggio && <p style={styles.messaggio}>{messaggio}</p>}
+            {messaggio && <p style={{
+                ...styles.messaggio,
+                color: messaggio.includes('✅') ? '#97C459' : '#F09595'
+            }}>{messaggio}</p>}
         </div>
     );
 }
@@ -98,7 +117,7 @@ const styles = {
     prezzo: { color: '#FAEEDA', fontSize: '22px', fontWeight: 500, margin: 0 },
     unita: { fontSize: '13px', fontWeight: 400, color: '#888780' },
     bottonePrenota: { background: '#FAC775', border: 'none', borderRadius: '100px', padding: '12px 28px', color: '#412402', fontWeight: 500, fontSize: '14px', cursor: 'pointer' },
-    messaggio: { color: '#97C459', fontSize: '13px', marginTop: '14px', textAlign: 'center' }
+    messaggio: { fontSize: '13px', marginTop: '14px', textAlign: 'center' }
 };
 
 export default DettaglioCampo;
