@@ -5,7 +5,39 @@
 }
 
 body {
-  background: #F7F6F2;
+  background: #F5F0E8;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* RESPONSIVE GLOBALE */
+@media (max-width: 768px) {
+  .sidebar-desktop {
+    display: none !important;
+  }
+  .main-content {
+    margin-left: 0 !important;
+    padding: 16px 16px 100px !important;
+  }
+  .tabbar-mobile {
+    display: flex !important;
+  }
+  /* Griglia stats su mobile: 2 colonne */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* Layout a colonna singola su mobile */
+  .admin-grid,
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .tabbar-mobile {
+    display: none !important;
+  }
+  .sidebar-desktop {
+    display: flex !important;
+  }
 }

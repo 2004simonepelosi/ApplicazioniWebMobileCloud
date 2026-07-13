@@ -62,7 +62,6 @@ function HomeAdmin() {
 
             <div className="main-content" style={{ marginLeft: '220px', flex: 1, padding: '28px', paddingBottom: '60px' }}>
 
-                {/* HEADER */}
                 <div style={{ marginBottom: '24px' }}>
                     <p style={{ fontSize: '12px', color: '#888780', margin: '0 0 2px', fontWeight: 500, letterSpacing: '0.5px' }}>
                         {new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
@@ -71,7 +70,7 @@ function HomeAdmin() {
                 </div>
 
                 {/* STATISTICHE */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+                <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
                     <div style={{ background: 'white', borderRadius: '16px', padding: '18px', border: '0.5px solid #E8E0D0' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
                             <i className="ti ti-users" style={{ fontSize: '18px', color: '#2D6A4F' }} aria-hidden="true"></i>
@@ -102,7 +101,7 @@ function HomeAdmin() {
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '16px' }}>
+                <div className="admin-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '16px' }}>
 
                     {/* ULTIME PRENOTAZIONI */}
                     <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: '0.5px solid #E8E0D0' }}>
@@ -133,8 +132,6 @@ function HomeAdmin() {
 
                     {/* PANNELLO DESTRA */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-                        {/* ULTIMI UTENTI */}
                         <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: '0.5px solid #E8E0D0' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                                 <p style={{ fontSize: '14px', fontWeight: 500, color: '#1A1A1A', margin: 0 }}>Utenti recenti</p>
@@ -155,7 +152,6 @@ function HomeAdmin() {
                             </div>
                         </div>
 
-                        {/* ACCESSO RAPIDO */}
                         <div style={{ background: 'white', borderRadius: '16px', padding: '20px', border: '0.5px solid #E8E0D0' }}>
                             <p style={{ fontSize: '14px', fontWeight: 500, color: '#1A1A1A', margin: '0 0 14px' }}>Accesso rapido</p>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -173,12 +169,36 @@ function HomeAdmin() {
                 </div>
             </div>
 
+            {/* TAB BAR MOBILE */}
+            <div className="tabbar-mobile" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '0.5px solid #E8E0D0', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '12px 0 20px', zIndex: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+                    <i className="ti ti-home" style={{ fontSize: '22px', color: '#2D6A4F' }} aria-hidden="true"></i>
+                    <span style={{ fontSize: '11px', color: '#2D6A4F', fontWeight: 500 }}>Home</span>
+                </div>
+                <div onClick={() => navigate('/gestore')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                    <i className="ti ti-settings" style={{ fontSize: '22px', color: '#B4B2A9' }} aria-hidden="true"></i>
+                    <span style={{ fontSize: '11px', color: '#B4B2A9' }}>Gestione</span>
+                </div>
+                <div onClick={() => navigate('/admin')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                    <i className="ti ti-crown" style={{ fontSize: '22px', color: '#B4B2A9' }} aria-hidden="true"></i>
+                    <span style={{ fontSize: '11px', color: '#B4B2A9' }}>Admin</span>
+                </div>
+                <div onClick={() => navigate('/profilo')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                    <i className="ti ti-user" style={{ fontSize: '22px', color: '#B4B2A9' }} aria-hidden="true"></i>
+                    <span style={{ fontSize: '11px', color: '#B4B2A9' }}>Profilo</span>
+                </div>
+            </div>
+
             <style>{`
         @media (max-width: 768px) {
           .sidebar-desktop { display: none !important; }
-          .main-content { margin-left: 0 !important; padding: 20px 16px !important; }
+          .main-content { margin-left: 0 !important; padding: 16px 16px 100px !important; }
+          .tabbar-mobile { display: flex !important; }
+          .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .admin-grid { grid-template-columns: 1fr !important; }
         }
         @media (min-width: 769px) {
+          .tabbar-mobile { display: none !important; }
           .sidebar-desktop { display: flex !important; }
         }
       `}</style>
