@@ -1,7 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from './Sidebar';
 
 const API = import.meta.env.VITE_API_URL;
+
+const SUPERFICI = {
+    tennis: ['Terra battuta', 'Cemento', 'Erba sintetica'],
+    padel: ['Indoor', 'Outdoor'],
+    calcio: ['Erba naturale', 'Erba sintetica', 'Cemento'],
+    basket: ['Parquet', 'Cemento', 'Outdoor'],
+};
+
+function getBadgeBg(sport) {
+    const s = sport?.toLowerCase();
+    if (s === 'calcio') return '#D8F3DC';
+    if (s === 'tennis') return '#F5E6D3';
+    if (s === 'padel') return '#DBEAFE';
+    if (s === 'basket') return '#FFEDD5';
+    return '#F1EFE8';
+}
+
+function getBadgeColor(sport) {
+    const s = sport?.toLowerCase();
+    if (s === 'calcio') return '#1B4332';
+    if (s === 'tennis') return '#6B3A1F';
+    if (s === 'padel') return '#1E3A5F';
+    if (s === 'basket') return '#C2410C';
+    return '#5F5E5A';
+}
 
 function DashboardGestore() {
     const [campi, setCampi] = useState([]);
@@ -9,17 +35,15 @@ function DashboardGestore() {
     const [utente, setUtente] = useState(null);
     const [caricamento, setCaricamento] = useState(true);
     const [nuovoCampo, setNuovoCampo] = useState(false);
-    const [form, setForm] = useState({ nome: '', sport: '', indirizzo: '', prezzo_ora: '', max_giocatori: '', descrizione: '' });
+    const [form, setForm] = useState({ nome: '', sport: '', tipo_superficie: '', indirizzo: '', prezzo_ora: '', max_giocatori: '', descrizione: '' });
     const [messaggio, setMessaggio] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
         const utenteSalvato = localStorage.getItem('utente');
         if (!utenteSalvato) { navigate('/login'); return; }
-
         const u = JSON.parse(utenteSalvato);
         if (u.ruolo !== 'gestore' && u.ruolo !== 'admin') { navigate('/'); return; }
-
         setUtente(u);
 
         fetch(`${API}/campi/gestore/${u.id}`)
@@ -27,8 +51,7 @@ function DashboardGestore() {
             .then(dati => {
                 setCampi(dati);
                 const promises = dati.map(campo =>
-                    fetch(`${API}/prenotazioni/campo/${campo.id}`)
-                        .then(r => r.json())
+                    fetch(`${API}/prenotazioni/campo/${campo.id}`).then(r => r.json())
                 );
                 return Promise.all(promises);
             })
@@ -38,18 +61,27 @@ function DashboardGestore() {
             });
     }, []);
 
+    const handleSportChange = (sport) => {
+        setForm(prev => ({ ...prev, sport, tipo_superficie: '' }));
+    };
+
     const handleAggiungiCampo = async (e) => {
         e.preventDefault();
         const risposta = await fetch(`${API}/campi`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...form, id_gestore: utente.id, prezzo_ora: parseFloat(form.prezzo_ora), max_giocatori: parseInt(form.max_giocatori) })
+            body: JSON.stringify({
+                ...form,
+                id_gestore: utente.id,
+                prezzo_ora: parseFloat(form.prezzo_ora),
+                max_giocatori: parseInt(form.max_giocatori)
+            })
         });
         const dati = await risposta.json();
         if (!risposta.ok) { setMessaggio(dati.errore); return; }
         setMessaggio('Campo aggiunto!');
         setNuovoCampo(false);
-        setForm({ nome: '', sport: '', indirizzo: '', prezzo_ora: '', max_giocatori: '', descrizione: '' });
+        setForm({ nome: '', sport: '', tipo_superficie: '', indirizzo: '', prezzo_ora: '', max_giocatori: '', descrizione: '' });
         fetch(`${API}/campi/gestore/${utente.id}`).then(r => r.json()).then(setCampi);
     };
 
@@ -63,114 +95,183 @@ function DashboardGestore() {
         setPrenotazioni(prev => prev.map(p => p.id === idPrenotazione ? { ...p, stato: 'cancellata' } : p));
     };
 
-    if (caricamento) return <p style={{ color: '#FAEEDA' }}>Caricamento...</p>;
+    const superficiDisponibili = SUPERFICI[form.sport?.toLowerCase()] || [];
+
+    if (caricamento) return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F5F0E8' }}>
+            <p style={{ color: '#888780', fontSize: '14px' }}>Caricamento...</p>
+        </div>
+    );
 
     return (
-        <div style={styles.schermo}>
-            <button onClick={() => navigate('/')} style={styles.bottoneIndietro}>← Indietro</button>
-            <p style={styles.titolo}>Dashboard Gestore</p>
+        <div style={{ display: 'flex', minHeight: '100vh', background: '#F5F0E8', fontFamily: 'var(--font-sans)' }}>
+            <Sidebar />
 
-            <div style={styles.stats}>
-                <div style={styles.statCard}>
-                    <p style={styles.statNumero}>{campi.length}</p>
-                    <p style={styles.statLabel}>Campi</p>
-                </div>
-                <div style={styles.statCard}>
-                    <p style={styles.statNumero}>{prenotazioni.filter(p => p.stato === 'in attesa').length}</p>
-                    <p style={styles.statLabel}>Da confermare</p>
-                </div>
-                <div style={styles.statCard}>
-                    <p style={styles.statNumero}>{prenotazioni.filter(p => p.stato === 'confermata').length}</p>
-                    <p style={styles.statLabel}>Confermate</p>
-                </div>
-            </div>
+            <div className="main-content" style={{ marginLeft: '220px', flex: 1, padding: '28px', paddingBottom: '100px' }}>
 
-            <div style={styles.sezioneHeader}>
-                <p style={styles.sottotitolo}>I miei campi</p>
-                <button onClick={() => setNuovoCampo(!nuovoCampo)} style={styles.bottoneAggiungi}>+ Aggiungi</button>
-            </div>
-
-            {nuovoCampo && (
-                <form onSubmit={handleAggiungiCampo} style={styles.form}>
-                    {['nome', 'sport', 'indirizzo', 'prezzo_ora', 'max_giocatori', 'descrizione'].map(campo => (
-                        <input
-                            key={campo}
-                            placeholder={campo.replace('_', ' ')}
-                            value={form[campo]}
-                            onChange={(e) => setForm(prev => ({ ...prev, [campo]: e.target.value }))}
-                            style={styles.input}
-                        />
-                    ))}
-                    <button type="submit" style={styles.bottoneSalva}>Salva campo</button>
-                </form>
-            )}
-
-            {messaggio && <p style={styles.messaggio}>{messaggio}</p>}
-
-            <div style={styles.lista}>
-                {campi.map(campo => (
-                    <div key={campo.id} style={styles.card}>
-                        <p style={styles.nomeCampo}>{campo.nome}</p>
-                        <p style={styles.dettagli}>{campo.sport} · {campo.prezzo_ora}€/h</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div>
+                        <p style={{ fontSize: '12px', color: '#888780', margin: '0 0 2px', fontWeight: 500, letterSpacing: '0.5px' }}>DASHBOARD</p>
+                        <p style={{ fontSize: '24px', fontWeight: 500, color: '#1A1A1A', margin: 0 }}>I tuoi campi</p>
                     </div>
-                ))}
-            </div>
+                    <button onClick={() => setNuovoCampo(!nuovoCampo)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2D6A4F', border: 'none', borderRadius: '10px', padding: '10px 18px', color: 'white', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>
+                        + Aggiungi campo
+                    </button>
+                </div>
 
-            <p style={{ ...styles.sottotitolo, marginTop: '24px' }}>Prenotazioni ricevute</p>
+                {/* STATISTICHE */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '28px' }}>
+                    <div style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '0.5px solid #E8E0D0' }}>
+                        <p style={{ fontSize: '28px', fontWeight: 500, color: '#1A1A1A', margin: '0 0 4px' }}>{campi.length}</p>
+                        <p style={{ fontSize: '12px', color: '#888780', margin: 0 }}>Campi totali</p>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '0.5px solid #E8E0D0' }}>
+                        <p style={{ fontSize: '28px', fontWeight: 500, color: '#E85D04', margin: '0 0 4px' }}>{prenotazioni.filter(p => p.stato === 'in attesa').length}</p>
+                        <p style={{ fontSize: '12px', color: '#888780', margin: 0 }}>Da confermare</p>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '0.5px solid #E8E0D0' }}>
+                        <p style={{ fontSize: '28px', fontWeight: 500, color: '#2D6A4F', margin: '0 0 4px' }}>{prenotazioni.filter(p => p.stato === 'confermata').length}</p>
+                        <p style={{ fontSize: '12px', color: '#888780', margin: 0 }}>Confermate</p>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '0.5px solid #E8E0D0' }}>
+                        <p style={{ fontSize: '28px', fontWeight: 500, color: '#1A1A1A', margin: '0 0 4px' }}>{prenotazioni.length}</p>
+                        <p style={{ fontSize: '12px', color: '#888780', margin: 0 }}>Totali</p>
+                    </div>
+                </div>
 
-            <div style={styles.lista}>
-                {prenotazioni.length === 0 ? (
-                    <p style={styles.vuoto}>Nessuna prenotazione ancora.</p>
-                ) : (
-                    prenotazioni.map(p => (
-                        <div key={p.id} style={styles.cardPrenotazione}>
-                            <div style={styles.cardHeader}>
-                                <p style={styles.nomeUtente}>{p.nome} {p.cognome}</p>
-                                <span style={{ fontSize: '12px', color: p.stato === 'confermata' ? '#97C459' : p.stato === 'cancellata' ? '#F09595' : '#FAC775' }}>
-                  {p.stato}
-                </span>
-                            </div>
-                            <p style={styles.dettagli}>{p.data} · {p.ora_inizio} - {p.ora_fine}</p>
-                            {p.stato === 'in attesa' && (
-                                <div style={styles.azioni}>
-                                    <button onClick={() => handleConferma(p.id)} style={styles.bottoneConferma}>✓ Conferma</button>
-                                    <button onClick={() => handleRifiuta(p.id)} style={styles.bottoneRifiuta}>✗ Rifiuta</button>
+                {/* FORM NUOVO CAMPO */}
+                {nuovoCampo && (
+                    <div style={{ background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '24px', border: '0.5px solid #E8E0D0' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 500, color: '#1A1A1A', margin: '0 0 16px' }}>Nuovo campo</p>
+                        <form onSubmit={handleAggiungiCampo}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                                <div>
+                                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#888780', display: 'block', marginBottom: '6px' }}>Nome campo</label>
+                                    <input placeholder="Es. Campo Centrale A" value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} style={{ width: '100%', background: '#F5F0E8', border: 'none', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', color: '#1A1A1A', outline: 'none', boxSizing: 'border-box' }} />
                                 </div>
-                            )}
-                        </div>
-                    ))
+                                <div>
+                                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#888780', display: 'block', marginBottom: '6px' }}>Sport</label>
+                                    <select value={form.sport} onChange={e => handleSportChange(e.target.value)} style={{ width: '100%', background: '#F5F0E8', border: 'none', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', color: '#1A1A1A', outline: 'none', boxSizing: 'border-box' }}>
+                                        <option value="">Seleziona sport</option>
+                                        <option value="calcio">Calcio</option>
+                                        <option value="tennis">Tennis</option>
+                                        <option value="padel">Padel</option>
+                                        <option value="basket">Basket</option>
+                                    </select>
+                                </div>
+                                {superficiDisponibili.length > 0 && (
+                                    <div>
+                                        <label style={{ fontSize: '12px', fontWeight: 500, color: '#888780', display: 'block', marginBottom: '6px' }}>
+                                            {form.sport === 'padel' ? 'Tipo (Indoor/Outdoor)' : 'Tipo superficie'}
+                                        </label>
+                                        <select value={form.tipo_superficie} onChange={e => setForm(p => ({ ...p, tipo_superficie: e.target.value }))} style={{ width: '100%', background: '#F5F0E8', border: 'none', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', color: '#1A1A1A', outline: 'none', boxSizing: 'border-box' }}>
+                                            <option value="">Seleziona tipo</option>
+                                            {superficiDisponibili.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                    </div>
+                                )}
+                                <div>
+                                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#888780', display: 'block', marginBottom: '6px' }}>Indirizzo</label>
+                                    <input placeholder="Via Roma, 1" value={form.indirizzo} onChange={e => setForm(p => ({ ...p, indirizzo: e.target.value }))} style={{ width: '100%', background: '#F5F0E8', border: 'none', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', color: '#1A1A1A', outline: 'none', boxSizing: 'border-box' }} />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#888780', display: 'block', marginBottom: '6px' }}>Prezzo/ora (€)</label>
+                                    <input type="number" placeholder="25" value={form.prezzo_ora} onChange={e => setForm(p => ({ ...p, prezzo_ora: e.target.value }))} style={{ width: '100%', background: '#F5F0E8', border: 'none', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', color: '#1A1A1A', outline: 'none', boxSizing: 'border-box' }} />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#888780', display: 'block', marginBottom: '6px' }}>Max giocatori</label>
+                                    <input type="number" placeholder="10" value={form.max_giocatori} onChange={e => setForm(p => ({ ...p, max_giocatori: e.target.value }))} style={{ width: '100%', background: '#F5F0E8', border: 'none', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', color: '#1A1A1A', outline: 'none', boxSizing: 'border-box' }} />
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }}>
+                                    <label style={{ fontSize: '12px', fontWeight: 500, color: '#888780', display: 'block', marginBottom: '6px' }}>Descrizione</label>
+                                    <input placeholder="Descrizione del campo..." value={form.descrizione} onChange={e => setForm(p => ({ ...p, descrizione: e.target.value }))} style={{ width: '100%', background: '#F5F0E8', border: 'none', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', color: '#1A1A1A', outline: 'none', boxSizing: 'border-box' }} />
+                                </div>
+                            </div>
+                            <button type="submit" style={{ background: '#2D6A4F', border: 'none', borderRadius: '10px', padding: '12px 24px', color: 'white', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>Salva campo</button>
+                        </form>
+                    </div>
                 )}
+
+                {messaggio && <p style={{ color: '#2D6A4F', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>{messaggio}</p>}
+
+                {/* LISTA CAMPI */}
+                <p style={{ fontSize: '12px', fontWeight: 500, color: '#888780', margin: '0 0 12px', letterSpacing: '0.3px' }}>I MIEI CAMPI</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginBottom: '28px' }}>
+                    {campi.map(campo => (
+                        <div key={campo.id} style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '0.5px solid #E8E0D0' }}>
+                            <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                                <span style={{ background: getBadgeBg(campo.sport), color: getBadgeColor(campo.sport), fontSize: '11px', fontWeight: 500, padding: '3px 10px', borderRadius: '100px' }}>{campo.sport}</span>
+                                {campo.tipo_superficie && <span style={{ background: '#F5F0E8', color: '#888780', fontSize: '11px', padding: '3px 10px', borderRadius: '100px' }}>{campo.tipo_superficie}</span>}
+                            </div>
+                            <p style={{ fontSize: '15px', fontWeight: 500, color: '#1A1A1A', margin: '0 0 4px' }}>{campo.nome}</p>
+                            <p style={{ fontSize: '12px', color: '#888780', margin: '0 0 8px' }}>{campo.indirizzo}</p>
+                            <p style={{ fontSize: '16px', fontWeight: 500, color: '#2D6A4F', margin: 0 }}>{campo.prezzo_ora}€/h</p>
+                        </div>
+                    ))}
+                </div>
+
+                {/* PRENOTAZIONI */}
+                <p style={{ fontSize: '12px', fontWeight: 500, color: '#888780', margin: '0 0 12px', letterSpacing: '0.3px' }}>PRENOTAZIONI RICEVUTE</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {prenotazioni.length === 0 ? (
+                        <p style={{ color: '#888780', fontSize: '14px' }}>Nessuna prenotazione ancora.</p>
+                    ) : (
+                        prenotazioni.map(p => (
+                            <div key={p.id} style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '0.5px solid #E8E0D0' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                    <div>
+                                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#1A1A1A', margin: '0 0 2px' }}>{p.nome} {p.cognome}</p>
+                                        <p style={{ fontSize: '12px', color: '#888780', margin: 0 }}>{p.data} · {p.ora_inizio} - {p.ora_fine}</p>
+                                    </div>
+                                    <span style={{ fontSize: '12px', fontWeight: 500, color: p.stato === 'confermata' ? '#2D6A4F' : p.stato === 'cancellata' ? '#C0392B' : '#E85D04' }}>
+                    {p.stato}
+                  </span>
+                                </div>
+                                {p.stato === 'in attesa' && (
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                                        <button onClick={() => handleConferma(p.id)} style={{ flex: 1, background: '#F0FDF4', border: '0.5px solid #2D6A4F', borderRadius: '8px', padding: '8px 0', color: '#2D6A4F', fontSize: '13px', cursor: 'pointer' }}>✓ Conferma</button>
+                                        <button onClick={() => handleRifiuta(p.id)} style={{ flex: 1, background: '#FEF2F2', border: '0.5px solid #C0392B', borderRadius: '8px', padding: '8px 0', color: '#C0392B', fontSize: '13px', cursor: 'pointer' }}>✗ Rifiuta</button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
+
+            {/* TAB BAR MOBILE */}
+            <div className="tabbar-mobile" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '0.5px solid #E8E0D0', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '12px 0 20px', zIndex: 20 }}>
+                <div onClick={() => navigate('/')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                    <i className="ti ti-home" style={{ fontSize: '22px', color: '#B4B2A9' }} aria-hidden="true"></i>
+                    <span style={{ fontSize: '11px', color: '#B4B2A9' }}>Home</span>
+                </div>
+                <div onClick={() => navigate('/prenotazioni')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                    <i className="ti ti-calendar-event" style={{ fontSize: '22px', color: '#B4B2A9' }} aria-hidden="true"></i>
+                    <span style={{ fontSize: '11px', color: '#B4B2A9' }}>Prenotazioni</span>
+                </div>
+                <div onClick={() => navigate('/notifiche')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                    <i className="ti ti-bell" style={{ fontSize: '22px', color: '#B4B2A9' }} aria-hidden="true"></i>
+                    <span style={{ fontSize: '11px', color: '#B4B2A9' }}>Notifiche</span>
+                </div>
+                <div onClick={() => navigate('/profilo')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', cursor: 'pointer' }}>
+                    <i className="ti ti-user" style={{ fontSize: '22px', color: '#B4B2A9' }} aria-hidden="true"></i>
+                    <span style={{ fontSize: '11px', color: '#B4B2A9' }}>Profilo</span>
+                </div>
+            </div>
+
+            <style>{`
+        @media (max-width: 768px) {
+          .sidebar-desktop { display: none !important; }
+          .main-content { margin-left: 0 !important; padding: 20px 16px !important; }
+          .tabbar-mobile { display: flex !important; }
+        }
+        @media (min-width: 769px) {
+          .tabbar-mobile { display: none !important; }
+          .sidebar-desktop { display: flex !important; }
+        }
+      `}</style>
         </div>
     );
 }
-
-const styles = {
-    schermo: { background: '#0F1115', borderRadius: '20px', padding: '24px', width: '100%', maxWidth: '420px', margin: '0 auto', minHeight: '600px', boxSizing: 'border-box' },
-    bottoneIndietro: { background: 'none', border: 'none', color: '#FAEEDA', fontSize: '14px', cursor: 'pointer', padding: 0, marginBottom: '20px' },
-    titolo: { color: '#FAEEDA', fontSize: '24px', fontWeight: 500, margin: '0 0 20px' },
-    stats: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '24px' },
-    statCard: { background: '#1C1F26', borderRadius: '14px', padding: '12px', textAlign: 'center' },
-    statNumero: { color: '#FAEEDA', fontSize: '22px', fontWeight: 500, margin: '0 0 2px' },
-    statLabel: { color: '#888780', fontSize: '11px', margin: 0 },
-    sezioneHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' },
-    sottotitolo: { color: '#FAEEDA', fontSize: '16px', fontWeight: 500, margin: 0 },
-    bottoneAggiungi: { background: '#FAC775', border: 'none', borderRadius: '10px', padding: '6px 14px', color: '#412402', fontWeight: 500, fontSize: '13px', cursor: 'pointer' },
-    form: { background: '#1C1F26', borderRadius: '16px', padding: '16px', marginBottom: '16px' },
-    input: { width: '100%', background: '#0F1115', border: 'none', borderRadius: '10px', padding: '10px 14px', marginBottom: '8px', color: '#FAEEDA', fontSize: '14px', boxSizing: 'border-box' },
-    bottoneSalva: { width: '100%', background: '#FAC775', border: 'none', borderRadius: '10px', padding: '12px 0', color: '#412402', fontWeight: 500, fontSize: '14px', cursor: 'pointer' },
-    messaggio: { color: '#97C459', fontSize: '13px', marginBottom: '12px' },
-    lista: { display: 'flex', flexDirection: 'column', gap: '10px' },
-    card: { background: '#1C1F26', borderRadius: '14px', padding: '14px' },
-    nomeCampo: { color: '#FAEEDA', fontSize: '15px', fontWeight: 500, margin: '0 0 4px' },
-    dettagli: { color: '#888780', fontSize: '13px', margin: 0 },
-    vuoto: { color: '#888780', fontSize: '14px', textAlign: 'center', marginTop: '20px' },
-    cardPrenotazione: { background: '#1C1F26', borderRadius: '14px', padding: '14px' },
-    cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' },
-    nomeUtente: { color: '#FAEEDA', fontSize: '14px', fontWeight: 500, margin: 0 },
-    azioni: { display: 'flex', gap: '8px', marginTop: '10px' },
-    bottoneConferma: { flex: 1, background: 'rgba(151, 196, 89, 0.15)', border: '1px solid #97C459', borderRadius: '8px', padding: '8px 0', color: '#97C459', fontSize: '13px', cursor: 'pointer' },
-    bottoneRifiuta: { flex: 1, background: 'rgba(240, 149, 149, 0.15)', border: '1px solid #F09595', borderRadius: '8px', padding: '8px 0', color: '#F09595', fontSize: '13px', cursor: 'pointer' }
-};
 
 export default DashboardGestore;
