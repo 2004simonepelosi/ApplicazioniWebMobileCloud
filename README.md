@@ -63,7 +63,7 @@ Il frontend comunica con il backend tramite chiamate HTTP REST (JSON). L'URL del
 
 ## Schema Database
 
-![Diagramma ER](diagramma-er.png)
+![Diagramma ER](SportBooking.drawio.png)
 
 ##API Endpoints
 
