@@ -39,11 +39,9 @@ Il frontend comunica con il backend tramite chiamate HTTP REST (JSON). L'URL del
 
 
 
-### Perché queste tecnologie?
-
-- **React** — permette di realizzare una SPA (Single Page Application): l'app cambia pagina senza ricaricare il browser, offrendo un'esperienza utente fluida. È uno dei framework più diffusi e richiesto dal corso.
-- **Node.js + Express** — stesso linguaggio del frontend (JavaScript), quindi un unico linguaggio per tutto il progetto. Express è leggero e permette di creare API REST in poche righe di codice.
-- **SQLite** — database senza server separato: il file del database risiede direttamente nella cartella del progetto. Ideale per un progetto universitario che non richiede scalabilità enterprise.
+- **React** — permette di realizzare una SPA (Single Page Application): l'app cambia pagina senza ricaricare il browser, offrendo un'esperienza utente fluida.
+- **Node.js + Express** — stesso linguaggio del frontend (JavaScript).
+- **SQLite** — database senza server separato: il file del database risiede direttamente nella cartella del progetto.
 
 
 
@@ -151,7 +149,7 @@ L'app sarà disponibile su `http://localhost:5173`
 
 ## Deploy
 
-Il progetto è deployato su [Render.com](https://render.com) con piano gratuito e si aggiorna automaticamente ad ogni push su GitHub (CI/CD automatico).
+Il progetto è deployato su [Render.com](https://render.com) si aggiorna automaticamente ad ogni push (CI/CD automatico).
 
 ### Backend (Web Service)
 - **Root Directory:** `backend`
