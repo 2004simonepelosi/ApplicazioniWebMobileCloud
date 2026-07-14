@@ -28,24 +28,14 @@ SportBoking distingue gli utenti in 3 macro categorie:
 
 ## Architettura
 
-┌─────────────────────────────────────────────┐
-│                   CLIENT                    │
-│         React + Vite (SPA)                  │
-│   React Router DOM (client-side routing)    │
-└──────────────────┬──────────────────────────┘
-                   │ HTTP REST API
-                   │ (VITE_API_URL)
-┌──────────────────▼──────────────────────────┐
-│                  SERVER                     │
-│         Node.js + Express.js                │
-│              PORT 3000                      │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│                DATABASE                     │
-│         SQLite (better-sqlite3)             │
-│              database.db                    │
-└─────────────────────────────────────────────┘
+L'applicazione segue un'architettura **client-server a 3 livelli**:
+| Livello | Tecnologia | Descrizione |
+|---------|-----------|-------------|
+| **Client** | React + Vite | SPA con routing lato client (React Router DOM) |
+| **Server** | Node.js + Express | API REST in ascolto sulla porta 3000 |
+| **Database** | SQLite | File locale `database.db` gestito con better-sqlite3 |
+
+Il frontend comunica con il backend tramite chiamate HTTP REST (JSON). L'URL del backend è configurato tramite la variabile d'ambiente `VITE_API_URL`.
 
 
 
@@ -75,45 +65,7 @@ SportBoking distingue gli utenti in 3 macro categorie:
 
 ## Schema Database
 
-utenti
-├── id (PK)
-├── nome, cognome, email (UNIQUE)
-├── password (bcrypt hash)
-├── ruolo (utente/gestore/admin)
-├── telefono
-└── cambio_password (0/1)
-
-campi
-├── id (PK)
-├── id_gestore (FK → utenti)
-├── nome, sport, tipo_superficie
-├── descrizione, indirizzo
-├── prezzo_ora, max_giocatori
-└── disponibile (0/1)
-
-prenotazioni
-├── id (PK)
-├── id_utente (FK → utenti)
-├── id_campo (FK → campi)
-├── data, ora_inizio, ora_fine
-├── num_partecipanti, note
-└── stato (in attesa/confermata/cancellata)
-
-notifiche
-├── id (PK)
-├── id_utente (FK → utenti)
-├── messaggio, data
-└── letta (0/1)
-
-recensioni
-├── id (PK)
-├── id_utente (FK → utenti)
-├── id_campo (FK → campi)
-├── stelle (1-5), commento
-└── data
-
-
-
+Da aggiungere DRAW.IO
 
 ##API Endpoints
 
@@ -156,17 +108,17 @@ recensioni
 |--------|----------|-------------|
 | GET | /admin/statistiche | Statistiche globali |
 | GET | /admin/prenotazioni | Tutte le prenotazioni |
-
+            
 ---
 
-## 🛠️ Istruzioni di Build/Run
+## Istruzioni di Build/Run
 
 ### Prerequisiti
 - Node.js >= 20.x
 - npm >= 9.x
 - Git
 
-### 1. Clona il repository
+### 1. Clona repository
 ```bash
 git clone https://github.com/2004simonepelosi/ApplicazioniWebMobileCloud
 cd ApplicazioniWebMobileCloud
@@ -179,7 +131,7 @@ npm install
 echo "PORT=3000" > .env
 node index.js
 ```
-Il server sarà disponibile su `http://localhost:3000`
+server disponibile su `http://localhost:3000`
 
 > Al primo avvio viene creato automaticamente un utente admin:
 > - Email: `admin@sportbooking.it`
@@ -197,7 +149,7 @@ L'app sarà disponibile su `http://localhost:5173`
 
 ---
 
-## ☁️ Deploy
+## Deploy
 
 Il progetto è deployato su [Render.com](https://render.com) con piano gratuito e si aggiorna automaticamente ad ogni push su GitHub (CI/CD automatico).
 
