@@ -63,7 +63,7 @@ Il frontend comunica con il backend tramite chiamate HTTP REST (JSON). L'URL del
 
 ## Schema Database
 
-Da aggiungere DRAW.IO
+![Diagramma ER](diagramma-er.png)
 
 ##API Endpoints
 
